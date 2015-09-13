@@ -229,7 +229,7 @@ namespace VSGI.FastCGI {
 		/**
 		 * {@inheritDoc}
 		 */
-		public Server (string application_id, owned ApplicationCallback application) {
+		public Server (string? application_id, owned ApplicationCallback application) {
 			base (application_id, (owned) application);
 
 #if GIO_2_40

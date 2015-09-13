@@ -51,7 +51,7 @@ namespace VSGI {
 		 *
 		 * @since 0.2
 		 */
-		public Server (string application_id, owned ApplicationCallback application) {
+		public Server (string? application_id, owned ApplicationCallback application) {
 			Object (application_id: application_id, flags: ApplicationFlags.HANDLES_COMMAND_LINE | ApplicationFlags.SEND_ENVIRONMENT | ApplicationFlags.NON_UNIQUE);
 			this.handle = (owned) application;
 		}

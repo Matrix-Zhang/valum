@@ -101,7 +101,7 @@ namespace VSGI.SCGI {
 
 	public class Server : VSGI.Server {
 
-		public Server (string application_id, owned VSGI.ApplicationCallback application) {
+		public Server (string? application_id, owned VSGI.ApplicationCallback application) {
 			base (application_id, (owned) application);
 
 #if GIO_2_40
