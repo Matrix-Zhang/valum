@@ -50,7 +50,7 @@ namespace VSGI.Loader {
 	 */
 	const OptionEntry[] options = {
 		{"directory",      'd', 0, OptionArg.FILENAME, ref directory,      "the directory where MODULE is located"},
-		{"server",         'i', 0, OptionArg.STRING,   ref server,         "technology used to serve the application", "soup"},
+		{"server",         'i', 0, OptionArg.STRING,   ref server,         "technology used to serve the application", "http"},
 		{"application-id", 'a', 0, OptionArg.STRING,   ref application_id, "application identifier"},
 		{null}
 	};
@@ -58,7 +58,7 @@ namespace VSGI.Loader {
 	public int main (string[] args) requires (Module.supported ()) {
 		// default options
 		directory      = null;
-		server         = "soup";
+		server         = "http";
 		application_id = null;
 
 		try {
@@ -67,7 +67,7 @@ namespace VSGI.Loader {
 					            "technology.\n" +
 								"\n" +
 								"Only active server technologies such as libsoup-2.4, FastCGI and SCGI are \n" +
-								"supported for the '--server' option. They correspond to 'soup', 'fastcgi' and\n" +
+								"supported for the '--server' option. They correspond to 'http', 'fastcgi' and\n" +
 								"'scgi' values respectively.\n" +
 								"\n" +
 								"MODULE is the shared library name without the 'lib' prefix and extension and\n" +
@@ -96,6 +96,13 @@ namespace VSGI.Loader {
 			return 1;
 		}
 
+		var server_module = new ServerModule (server);
+
+		if (!server_module.load ()) {
+			stderr.printf ("%s\n", Module.error ());
+			return 1;
+		}
+
 		var module_path = Module.build_path (directory, module_and_symbol[0]);
 
 		var module = Module.open (module_path, ModuleFlags.BIND_LAZY);
@@ -121,16 +128,10 @@ namespace VSGI.Loader {
 			foreach (var arg in args[3:args.length])
 				server_args += arg;
 
-		switch (server) {
-			case "soup":
-				return new Soup.Server (application_id, (owned) app).run (server_args);
-			case "fastcgi":
-				return new FastCGI.Server (application_id, (owned) app).run (server_args);
-			case "scgi":
-				return new SCGI.Server (application_id, (owned) app).run (server_args);
-			default:
-				stderr.printf ("no server named '%s'", server);
-				return 1;
-		}
+		var svr = (Server) Object.@new (server_module.server_type, "application-id", application_id);
+
+		svr.set_application_callback ((owned) app);
+
+		return svr.run (server_args);
 	}
 }

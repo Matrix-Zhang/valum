@@ -70,7 +70,7 @@ def build(bld):
         packages     = ['glib-2.0', 'gio-2.0', 'gio-unix-2.0', 'libsoup-2.4', 'gee-0.8', 'ctpl', 'fcgi'],
         target       = 'valum',
         gir          = 'Valum-{}'.format(API_VERSION),
-        source       = bld.path.ant_glob('src/*.vala', excl='src/vsgi-loader.vala'),
+        source       = bld.path.ant_glob('src/*.vala', excl='src/vsgi-loader.vala src/vsgi-server-module.vala'),
         uselib       = ['GLIB', 'GIO', 'GIOUNIX', 'CTPL', 'GEE', 'SOUP', 'FCGI', 'GCOV'],
         vapi_dirs    = ['vapi'],
         header_path  = '${INCLUDEDIR}/valum',
@@ -79,8 +79,9 @@ def build(bld):
     # static library for tests and examples
     bld.stlib(
         packages     = ['glib-2.0', 'gio-2.0', 'gio-unix-2.0', 'libsoup-2.4', 'gee-0.8', 'ctpl', 'fcgi'],
+        cflags       = ['-fPIC'],
         target       = 'valum',
-        source       = bld.path.ant_glob('src/*.vala', excl='src/vsgi-loader.vala'),
+        source       = bld.path.ant_glob('src/*.vala', excl='src/vsgi-loader.vala src/vsgi-server-module.vala'),
         use          = ['GLIB', 'GIO', 'GIOUNIX', 'CTPL', 'GEE', 'SOUP', 'FCGI', 'GCOV'],
         vapi_dirs    = ['vapi'],
         vala_dir     = 'static',
@@ -90,7 +91,7 @@ def build(bld):
     bld.program(
         packages     = 'gmodule-2.0',
         target       = 'vsgi',
-        source       = 'src/vsgi-loader.vala',
+        source       = 'src/vsgi-loader.vala src/vsgi-server-module.vala',
         use          = 'valum',
         uselib       = 'GMODULE',
         vapi_dirs    = 'vapi',
