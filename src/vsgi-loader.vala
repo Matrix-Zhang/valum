@@ -33,6 +33,47 @@ namespace VSGI.Loader {
 	/**
 	 * @since 0.3
 	 */
+	public class ApplicationModule : Object {
+
+		private Module? module = null;
+
+		public string directory { construct; get; }
+
+		public string filename { construct; get; }
+
+		public string symbol { construct; get; }
+
+		public ApplicationModule (string directory, string filename, string symbol) {
+			Object (directory: directory, filename: filename, symbol: symbol);
+		}
+
+		public bool load () {
+			var module_path = Module.build_path (directory, filename);
+			module          = Module.open (module_path, ModuleFlags.BIND_LAZY);
+			return module == null;
+		}
+
+		public void unload () {
+			module = null;
+		}
+
+		public bool get_application_callback (out ApplicationCallback app) {
+			void* app_symbol;
+
+			if (!module.symbol (symbol, out app_symbol)) {
+				stderr.printf ("%s\n", Module.error ());
+				return false;
+			}
+
+			app = (ApplicationCallback) (owned) app_symbol;
+
+			return true;
+		}
+	}
+
+	/**
+	 * @since 0.3
+	 */
 	public string? directory;
 
 	/**
@@ -103,22 +144,12 @@ namespace VSGI.Loader {
 			return 1;
 		}
 
-		var module_path = Module.build_path (directory, module_and_symbol[0]);
+		var app_module = new ApplicationModule (directory, module_and_symbol[0], module_and_symbol[1]);
 
-		var module = Module.open (module_path, ModuleFlags.BIND_LAZY);
-
-		if (module == null) {
+		if (!app_module.load ()) {
 			stderr.printf ("%s\n", Module.error ());
 			return 1;
 		}
-
-		void* app_symbol;
-		if (!module.symbol (module_and_symbol[1], out app_symbol)) {
-			stderr.printf ("%s\n", Module.error ());
-			return 1;
-		}
-
-		var app = (ApplicationCallback) (owned) app_symbol;
 
 		// use the module:symbol as zeroth argument
 		string[] server_args = {args[1]};
@@ -130,7 +161,35 @@ namespace VSGI.Loader {
 
 		var svr = (Server) Object.@new (server_module.server_type, "application-id", application_id);
 
+		ApplicationCallback app;
+		if (!app_module.get_application_callback (out app)) {
+			stderr.printf ("%s\n", Module.error ());
+			return 1;
+		}
+
 		svr.set_application_callback ((owned) app);
+
+		// reload the application in SIGHUP
+		Unix.signal_add (ProcessSignal.HUP, () => {
+			// serve a temporary app
+			svr.set_application_callback ((req, res) => {
+				res.status = 200;
+				size_t bytes_written;
+				res.body.write_all ("Reloading...".data, out bytes_written);
+			});
+
+			app_module.unload ();
+
+			if (app_module.load () && app_module.get_application_callback (out app)) {
+				svr.set_application_callback ((owned) app);
+			} else {
+				stderr.printf ("%s\n", Module.error ());
+				svr.release ();
+				return false;
+			}
+
+			return true;
+		});
 
 		return svr.run (server_args);
 	}

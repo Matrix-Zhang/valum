@@ -92,8 +92,7 @@ def build(bld):
         packages     = 'gmodule-2.0',
         target       = 'vsgi',
         source       = 'src/vsgi-loader.vala src/vsgi-server-module.vala',
-        use          = 'valum',
-        uselib       = 'GMODULE',
+        use          = 'valum GMODULE',
         vapi_dirs    = 'vapi',
         install_path = '${BINDIR}')
 
