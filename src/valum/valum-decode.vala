@@ -91,6 +91,9 @@ namespace Valum {
 	/**
 	 * Decode the request content charset to the desired one.
 	 *
+	 * If no charset is provided and the media type is 'text/\*', then it's
+	 * assumed to be the default HTTP/1.1 charset, 'iso-8859-1'.
+	 *
 	 * @since 0.3
 	 *
 	 * @param destination destination charset
@@ -99,7 +102,7 @@ namespace Valum {
 		return (req, res, next) => {
 			HashTable<string, string> @params;
 			var content_type = req.headers.get_content_type (out @params);
-			var from         = @params["charset"];
+			var from         = @params["charset"] ?? (content_type.down ().has_prefix ("text/") ? "iso-8859-1" : null);
 
 			// no charset to decode (or default)
 			if (from == null) {
