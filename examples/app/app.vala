@@ -21,6 +21,9 @@ using VSGI.HTTP;
 
 var app = new Router ();
 
+app.use (decode ());
+app.use (decode_charset ("utf-8"));
+
 app.use ((req, res, next) => {
 	res.headers.append ("Server", "Valum/1.0");
 	HashTable<string, string>? @params = new HashTable<string, string> (str_hash, str_equal);
