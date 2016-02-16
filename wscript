@@ -15,7 +15,7 @@ def options(opt):
 def configure(conf):
     conf.load('compiler_c vala')
 
-    conf.check_vala(min_version=(0,26,0))
+    conf.check_vala(min_version=(0,16,0))
     conf.check(lib='gcov', mandatory=False, uselib_store='GCOV', args='--cflags --libs')
 
     conf.recurse(['src', 'docs', 'tests'])
